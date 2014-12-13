@@ -40,6 +40,8 @@ int main(int argc, char **argv) {
     invalid = 0;
     sent = 0;
 
+    //ciao
+
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;	//ipv4
     server_addr.sin_port = htons(atoi(argv[2]));
