@@ -9,6 +9,7 @@ int send_msg(struct queue *);
 int rec_msg(int, struct queue *);
 int send_to (int ,struct queue * ,struct info *);
 int rec_from(int ,struct queue* ,struct info * );
+void read_comb(char *);
 
 
 int main(int argc, char **argv) {
@@ -23,7 +24,8 @@ int main(int argc, char **argv) {
     char * msg;
     struct queue * queue_l = 0;
     char cmdbuff[256];
-    char comb[4];
+    char comb[5];
+    char attempt[5];
 
 
     if(argc != 3) {
@@ -274,6 +276,13 @@ int main(int argc, char **argv) {
                         printf("ti sei disconnesso\n");
                         continue;
                     }
+
+                    if((strncmp(cmdbuff, "!combinazione", 13))==0){
+
+                        queue_add(&queue_l, cd, CL_COMB, 0, 0);
+                        FD_SET(cd, &write_set);
+                        continue;
+                    }
                 }
 
                 else if(i == sd){       //nuovi dati dal server
@@ -351,10 +360,7 @@ int main(int argc, char **argv) {
 
                                 
                                     printf("richiesta accettata\n");
-                                    printf("è il turno di %s\n",opponent_info.name );
-
-                                    printf("digita la combinazione segreta\n");
-
+                                    
                                     turn = 0;
                                     p->flags = CL_ACC;
 
@@ -370,6 +376,7 @@ int main(int argc, char **argv) {
                                 p->sd = sd;
                                 p->step = 1;
                                 FD_SET(sd, &write_set);
+
                                 break;
 
                             }
@@ -395,6 +402,8 @@ int main(int argc, char **argv) {
                                 printf("%s ha accettato la partita\n",(p->buffer+ sizeof(unsigned short)+ sizeof(struct in_addr)));
 
                                 printf("digita la combinazione segreta\n");
+
+                                read_comb(comb);
 
                                 
 
@@ -529,6 +538,13 @@ int main(int argc, char **argv) {
                                 
                                 
                                 break;
+
+                            case CL_ACC:
+                                printf("è il turno di %s\n",opponent_info.name );
+
+                                printf("digita la combinazione segreta\n");
+
+                                read_comb(comb);
 
                             default: break;
                         }
@@ -756,5 +772,29 @@ void queue_remove(struct queue ** queue_l, struct queue ** pun) {
         free(*pun);
 
     }
+}
+
+void read_comb(char * comb ){
+    
+    int invalid=0;
+
+    do{
+        invalid = 0;
+
+        int i;
+
+        scanf("%*[^\n]%*c");
+
+        scanf("%4s", comb);
+
+        for(i=0; i<4 ; i++)
+        {
+            if(comb[i]>'9' || comb[i]<'0')
+                invalid = 1;
+
+        }
+
+    } while (invalid == 1);
+    printf("%c%c%c%c\n", comb[0], comb[1], comb[2], comb[3]);
 }
 

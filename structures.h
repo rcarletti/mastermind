@@ -25,6 +25,7 @@
 #define CL_QUIT		0x09		//comando quit
 #define CL_DISC		0x0A		//client disconnesso
 #define CL_UNDEF	0x0B		//indefinito
+#define CL_COMB		0x0C		//comando combinazione
 
 
 
