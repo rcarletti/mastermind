@@ -10,6 +10,7 @@ int rec_msg(int, struct queue *);
 int send_to (int ,struct queue * ,struct info *);
 int rec_from(int ,struct queue* ,struct info * );
 void read_comb(char *);
+void handle_combination(char *);
 
 void read_cmd(void);
 void handle_incoming_connect(struct queue *p);
@@ -20,12 +21,16 @@ void flush_in(void);
 int sd, cd;
 fd_set read_set, write_set;
 
-int yourTurn = 0;
+int isYourTurn = 0;
+
+int correct =0;
+int wrong = 0;
 
 struct queue *queue_l;
 struct info player_info, opponent_info;
 
 int turn;
+char comb[5];
 
 
 int main(int argc, char **argv)
@@ -36,7 +41,7 @@ int main(int argc, char **argv)
     fd_set read_tmp, write_tmp;
     int msg_len;
     char * msg;
-    char comb[5];
+    
     char attempt[5];
 
     queue_l = 0;
@@ -291,6 +296,7 @@ int main(int argc, char **argv)
                     p = queue_search(queue_l, i);
                     if(p == 0){
                         p = queue_add(&queue_l, i, CL_UNDEF, 0, 0);
+
                     }
                     
                     ret = rec_from(i, p, &opponent_info);
@@ -312,11 +318,23 @@ int main(int argc, char **argv)
                             printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
                             FD_CLR(cd, &write_set);
                             printf("E' il tuo turno\n");
+                            isYourTurn = 1;
+                            //queue_remove(&queue_l, &p);
+                            break;
+
+                        case CL_COMB:
+                            
+                            FD_CLR(cd, &write_set);
+                            isYourTurn = 1;
+                            handle_combination(p->buffer);
                             break;
 
                         default:
                             break;
                         }
+
+                        queue_remove(&queue_l, &p);
+                        FD_CLR(cd, &write_set);
                     }
                 }
     		}
@@ -351,10 +369,13 @@ int main(int argc, char **argv)
                             fflush(stdout);
                             read_comb(comb);
 
+                            isYourTurn = 0;
+
                             queue_add(&queue_l, cd, CL_INS, 0, 0);
                             FD_SET(cd, &write_set);
 
                             printf("E' il turno di %s\n", opponent_info.name);
+                            
                             break;
                         }
                        
@@ -440,6 +461,7 @@ struct queue * queue_add(struct queue ** queue_t, int sd, unsigned short flags, 
     tmp->buffer = buff;
     tmp->next = 0;
 
+
     if(*queue_t ==0)
         *queue_t = tmp;
     else
@@ -447,6 +469,7 @@ struct queue * queue_add(struct queue ** queue_t, int sd, unsigned short flags, 
         for(pun = *queue_t; pun->next!=0; pun = pun->next);
         pun->next = tmp;
     }
+
 
     return tmp;
 }
@@ -512,6 +535,8 @@ int rec_msg(int sd,struct queue * p) {
 
 int send_to (int i,struct queue * p,struct info * opponent_info)
 {
+
+
     int ret;
     socklen_t len = sizeof(opponent_info->addr);
 
@@ -539,21 +564,29 @@ int send_to (int i,struct queue * p,struct info * opponent_info)
 
 
 int rec_from(int i,struct queue* p,struct info * opponent_info) {
+
+
+
     int ret;
     socklen_t len = sizeof(opponent_info->addr);
 
     switch(p->step)
     {
     case 1:
-        ret = recvfrom(i, (void *) &p->flags, sizeof(p->flags), 0,(struct sockaddr *) &opponent_info->addr, &len);    
+        ret = recvfrom(i, (void *) &p->flags, sizeof(p->flags), 0,(struct sockaddr *) &opponent_info->addr, &len);
+
         break;
     case 2:
         ret = recvfrom(i, (void *) &p->length, sizeof(p->length), 0, (struct sockaddr *) &opponent_info->addr, &len);
         if(p->length == 0)
             p->step++;
+
         break;
     case 3:
+        p->buffer = (char*)malloc(p->length);
         ret = recvfrom(i, (void *) p->buffer, p->length, 0, (struct sockaddr *) &opponent_info->addr, &len);
+        
+        
         break;
     default:
         break;
@@ -597,7 +630,6 @@ void read_comb(char * comb)
         for(i=0; i<4 ; i++)
             if(comb[i]>'9' || comb[i]<'0')
                 invalid = 1;
-        printf("%s\n", comb);
 
     } while (invalid == 1);
 }
@@ -643,6 +675,8 @@ void read_cmd()
 
         //aggiungere errore "non puoi giocare contro te stesso"
 
+        //aggiungere errore se nn esiste il client
+
         printf("connessione in corso con %s\n",buff );
         queue_add(&queue_l, sd, CL_CONN, strlen(buff)+1, buff);
         free(buff);
@@ -665,9 +699,24 @@ void read_cmd()
 
     else if((strncmp(cmd, "!combinazione", 13))==0) {
 
-        if(turn == 1)
-        queue_add(&queue_l, cd, CL_COMB, 0, 0);
+        if(isYourTurn == 0){
+            printf("non è il tuo turno, aspetta l'altro giocatore\n");
+        }
+
+        else{
+        char comb_buff[5];
+        comb_buff[0] = cmd[14];
+        comb_buff[1] = cmd[15];
+        comb_buff[2] = cmd[16];
+        comb_buff[3] = cmd[17];
+        comb_buff[4] = '\0';
+ 
+
+        isYourTurn = 0;
+        queue_add(&queue_l, cd, CL_COMB, 5 , comb_buff);
         FD_SET(cd, &write_set);
+        
+        }   
     }
 
 
@@ -745,4 +794,24 @@ void handle_incoming_accept(struct queue *p)
     strcpy(opponent_info.name, name);
 
     queue_remove(&queue_l, &p);
+}
+
+
+void handle_combination(char * buff){
+
+    int i, j;
+
+    for(i=0; i<4; i++){
+        if(buff[i]==comb[i])
+            correct++;
+        else{
+            for(j=0; j<4; j++)
+                if(buff[j]==comb[i])
+                    wrong++;
+            
+        }
+    }
+
+
+    printf("giuste al posto sbagliato %d", wrong);
 }
