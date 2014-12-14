@@ -20,6 +20,8 @@ void flush_in(void);
 int sd, cd;
 fd_set read_set, write_set;
 
+int first = 1;
+
 struct queue *queue_l;
 struct info player_info, opponent_info;
 
@@ -267,7 +269,7 @@ int main(int argc, char **argv)
                             printf("Digita la combinazione segreta: ");
                             fflush(stdout);
                             read_comb(comb);
-                            printf("E' il turno di %s\n", opponent_info.name);
+
                             break;
 
                         case CL_DISC:
@@ -306,6 +308,12 @@ int main(int argc, char **argv)
                             FD_CLR(cd, &write_set);
                             break;
 
+                        case CL_INS:
+                            printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
+                            FD_CLR(cd, &write_set);
+                            printf("E' il tuo turno\n");
+                            break;
+
                         default:
                             break;
                         }
@@ -342,7 +350,11 @@ int main(int argc, char **argv)
                             printf("Digita la combinazione segreta: ");
                             fflush(stdout);
                             read_comb(comb);
-                            printf("E' il tuo turno\n");
+
+                            queue_add(&queue_l, cd, CL_INS, 0, 0);
+                            FD_SET(cd, &write_set);
+
+                            printf("E' il turno di %s\n", opponent_info.name);
                             break;
                         }
                        
@@ -356,8 +368,6 @@ int main(int argc, char **argv)
 
                     p = queue_search(queue_l, i);
                     ret = send_to(i, p, &opponent_info);
-
-                    printf("client_sent_cmpl\n");
 
                     if(p->step == 4) {
 
@@ -509,7 +519,7 @@ int send_to (int i,struct queue * p,struct info * opponent_info)
     {
     case 1:
         ret = sendto(i, (void *) &p->flags, sizeof(p->flags), 0, (struct sockaddr *) &opponent_info->addr, len);
-        printf("%hu \n",p->flags );
+        
         break;
     case 2:
         ret = sendto(i, (void *) &p->length, sizeof(p->length), 0, (struct sockaddr *) &opponent_info->addr, len);
@@ -677,7 +687,7 @@ void handle_incoming_connect(struct queue *p)
         printf("Il client %s, IP %s, porta %hu, vuole giocare. "
                "Accetti la richiesta? [Y|N]: ", name, inet_ntoa(*ip), *port);
         fflush(stdout);
-        
+
         scanf("%c", &ans);
         flush_in();
 

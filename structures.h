@@ -26,6 +26,7 @@
 #define CL_DISC		0x0A		//client disconnesso
 #define CL_UNDEF	0x0B		//indefinito
 #define CL_COMB		0x0C		//comando combinazione
+#define CL_INS		0x0D		//combinazione inserita
 
 
 

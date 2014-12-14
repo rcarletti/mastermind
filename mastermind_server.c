@@ -561,12 +561,12 @@ void client_remove(int i, struct client_t ** client_list,struct queue * queue_l,
 	}
 
 	if((*client_list)->id ==i){
-		printf("primoif1\n");
+
 		printf("%s si è disconnesso\n", (*client_list)->name);
 		tmp = *client_list;
 		*client_list = (*client_list)->next;
 		free(tmp);
-		printf("primoif2\n");
+
 	}
 
 	else {
@@ -575,11 +575,11 @@ void client_remove(int i, struct client_t ** client_list,struct queue * queue_l,
 
 		for(tmp = *client_list; tmp->next!=0 && tmp->next->id !=i; tmp = tmp->next);
 		tmp2 = tmp->next;
-	printf("secondoif1\n");
+
 		printf("%s si è disconnesso\n",tmp2->name );
 		tmp->next = tmp2->next;
 		free(tmp2);
-		printf("secondoif2\n");
+
 
 
 
