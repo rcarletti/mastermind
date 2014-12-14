@@ -20,6 +20,7 @@ void flush_in(void);
 
 int sd, cd;
 fd_set read_set, write_set;
+int bb[2];
 
 int isYourTurn = 0;
 
@@ -327,7 +328,14 @@ int main(int argc, char **argv)
                             FD_CLR(cd, &write_set);
                             isYourTurn = 1;
                             handle_combination(p->buffer);
+                            queue_add(&queue_l, cd, CL_ANS, 2,(char*) bb);
+                            FD_SET(cd, &write_set);
                             break;
+
+                        case CL_ANS:
+                            printf("CL_ANS\n");
+                            FD_CLR(cd, &write_set);
+                            break; 
 
                         default:
                             break;
@@ -436,11 +444,13 @@ void show_help(){
 
 
 struct queue * queue_add(struct queue ** queue_t, int sd, unsigned short flags, unsigned int length, char *buffer) {
-
+    
     struct queue * tmp;
     struct queue * pun;
     char *buff;
     int i;
+
+    printf("queue_add\n");
 
     if (length > 0)
     {
@@ -535,7 +545,7 @@ int rec_msg(int sd,struct queue * p) {
 
 int send_to (int i,struct queue * p,struct info * opponent_info)
 {
-
+    printf("send_to\n");
 
     int ret;
     socklen_t len = sizeof(opponent_info->addr);
@@ -565,7 +575,7 @@ int send_to (int i,struct queue * p,struct info * opponent_info)
 
 int rec_from(int i,struct queue* p,struct info * opponent_info) {
 
-
+    printf("rec_fr\n");
 
     int ret;
     socklen_t len = sizeof(opponent_info->addr);
@@ -798,8 +808,10 @@ void handle_incoming_accept(struct queue *p)
 
 
 void handle_combination(char * buff){
+    printf("handle_combination\n");
 
     int i, j;
+    
 
     for(i=0; i<4; i++){
         if(buff[i]==comb[i])
@@ -812,6 +824,14 @@ void handle_combination(char * buff){
         }
     }
 
+   /* if(correct==4){
+        queue_add(&queue_l, cd, CL_WIN, 0, 0 );
+        FD_SET(cd, &write_set);
+    }*/
 
-    printf("giuste al posto sbagliato %d", wrong);
+    
+        bb[0] = correct;
+        bb[1] = wrong;
+    
+
 }
