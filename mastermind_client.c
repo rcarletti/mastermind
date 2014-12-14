@@ -20,7 +20,7 @@ void flush_in(void);
 int sd, cd;
 fd_set read_set, write_set;
 
-int first = 1;
+int yourTurn = 0;
 
 struct queue *queue_l;
 struct info player_info, opponent_info;
@@ -664,9 +664,13 @@ void read_cmd()
     }
 
     else if((strncmp(cmd, "!combinazione", 13))==0) {
+
+        if(turn == 1)
         queue_add(&queue_l, cd, CL_COMB, 0, 0);
         FD_SET(cd, &write_set);
     }
+
+
 }
 
 
