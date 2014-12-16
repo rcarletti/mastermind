@@ -278,12 +278,7 @@ int main(int argc, char **argv)
 
                             break;
 
-                        case CL_DISC:
-                            printf("Il tuo avversario si è disconnesso\n");
-                            FD_CLR(cd, &write_set);
-                            queue_remove(&queue_l, &p);
-                            break;
-
+  
                         default:
                             break;
                         }
@@ -310,10 +305,11 @@ int main(int argc, char **argv)
 
                         switch(p->flags)
                         {
-                        case CL_DISC:
-                                
+                      case CL_DISC:
+                            printf("Il tuo avversario si è disconnesso\n");
                             FD_CLR(cd, &write_set);
                             break;
+
 
                         case CL_INS:
                             printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
