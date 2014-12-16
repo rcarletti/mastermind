@@ -18,6 +18,9 @@ void handle_incoming_accept(struct queue *p);
 
 void flush_in(void);
 
+
+
+
 int sd, cd;
 fd_set read_set, write_set;
 char  bb[100];
@@ -339,9 +342,12 @@ int main(int argc, char **argv)
                         case CL_WIN:
                             printf("hai vinto!\n");
                             FD_CLR(cd, &write_set);
-                            FD_CLR(cd, &read_set);
                             queue_add(&queue_l, sd, CL_WIN, 0, 0);
                             FD_SET(sd, &write_set);
+                            isYourTurn =0;
+
+
+
                             break;
 
                         default:
@@ -387,6 +393,12 @@ int main(int argc, char **argv)
                             isYourTurn = 0;
 
                             queue_add(&queue_l, cd, CL_INS, 0, 0);
+                            /*p->flags = CL_INS;
+                            p->buffer = 0;
+                            free(p->buffer);
+                            p->length = 0;
+                            p->sd = cd;
+                            p->step = 1;*/
                             FD_SET(cd, &write_set);
 
                             printf("E' il turno di %s\n", opponent_info.name);
@@ -462,6 +474,7 @@ struct queue * queue_add(struct queue ** queue_t, int sd, unsigned short flags, 
     struct queue * pun;
     char *buff;
     int i;
+
 
 
     if (length > 0)
@@ -621,6 +634,8 @@ int rec_from(int i,struct queue* p,struct info * opponent_info) {
 void queue_remove(struct queue ** queue_l, struct queue ** pun) {
     struct queue *tmp;
 
+
+
     if(*queue_l == *pun) {
         *queue_l = (*pun)->next;
         free((*pun)->buffer);
@@ -653,6 +668,8 @@ void read_comb(char * comb)
                 invalid = 1;
 
     } while (invalid == 1);
+
+    printf("%s\n", comb );
 }
 
 
@@ -822,28 +839,38 @@ void handle_combination(char * buff){
 
 
     int i, j;
+    int app[4] = {-1, -1, -1, -1};
+
+ 
 
     wrong = 0;
     correct = 0;
     
 
     for(i=0; i<4; i++){
-        if(buff[i]==comb[i])
+        if(buff[i]==comb[i]){
             correct++;
-        else{
-            for(j=0; j<4; j++)
-                if(buff[j]==comb[i])
-                    wrong++;
-            
-        }
+            app[i]= comb[i];}
     }
 
+    for(i = 0; i<4; i++){
+        for(j=0; j<4; j++){
+            if(comb[j]==buff[i] && app[i]==-1){
+                wrong++;
+                app[i]=j;
+            }
+        }
+    }
 
     if(correct==4){
         queue_add(&queue_l, cd, CL_WIN, 0, 0 );
         FD_SET(cd, &write_set);
 
         printf("mi dispiace, hai perso\n");
+
+
+
+
     }
     
     else{
@@ -857,3 +884,4 @@ void handle_combination(char * buff){
 
     
 }
+

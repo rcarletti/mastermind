@@ -289,7 +289,7 @@ int main(int argc, char **argv){
 									free(p->buffer);
 									p->sd = i;
 									p->step = 1;
-									FD_SET(i, &write_tmp);
+									FD_SET(i, &write_set);
 
 								}
 
