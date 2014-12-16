@@ -28,6 +28,7 @@
 #define CL_COMB		0x0C		//comando combinazione
 #define CL_INS		0x0D		//combinazione inserita
 #define CL_ANS		0x0E		//invio numero di cifre giuste e sbagliate
+#define CL_WIN 		0x0F		//partita vinta
 
 
 

@@ -396,6 +396,7 @@ int main(int argc, char **argv){
 								queue_remove(&queue_l, &p);
 								break;
 
+							case CL_WIN:
 							case CL_DISC:
 							{
 								
