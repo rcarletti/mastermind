@@ -300,6 +300,7 @@ int main(int argc, char **argv)
                         case CL_REF:
                             printf("%s ha rifiutato la partita\n", p->buffer);
                             queue_remove(&queue_l, &p);
+                            cprintf(" ");
                             break;
 
                         case CL_ACC:
@@ -743,7 +744,7 @@ void read_cmd()
 
     else if((strncmp(cmd, "!help", 5)==0)) {
         show_help();
-        cprintf(" ");
+        cprintf("");
     }
 
     else if((strncmp(cmd, "!who", 4)==0)) {
