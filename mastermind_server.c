@@ -277,6 +277,7 @@ int main(int argc, char **argv){
 									p->flags = CL_NEC;
 									p->length = 0;
 									free(p->buffer);
+									p->buffer =0;
 									p->sd = i;
 									p->step = 1;
 									FD_SET(i, &write_set);
@@ -287,6 +288,7 @@ int main(int argc, char **argv){
 									p->flags = CL_BUSY;
 									p->length = 0;
 									free(p->buffer);
+									p->buffer = 0;
 									p->sd = i;
 									p->step = 1;
 									FD_SET(i, &write_set);
@@ -399,7 +401,7 @@ int main(int argc, char **argv){
 							case CL_WIN:
 							case CL_DISC:
 							{
-								
+								FD_CLR(i, &read_set);
 
 								struct client_t *from, *opp;
 
@@ -433,17 +435,19 @@ int main(int argc, char **argv){
 
 					switch(pun->step){
 						case 1:
+							printf("send1\n");
 							
 							send(i, (void*)&pun->flags, sizeof(pun->flags), 0);
 							break;
 						case 2:
+							printf("send2\n");
 							
 							send(i, (void*)&pun->length, sizeof(pun->length), 0);
 							if(pun->length ==0)
 								pun->step++;
 							break;
 						case 3:
-							
+							printf("send 3\n");
 							send(i, (void*)pun->buffer, pun->length, 0);
 							break;
 						default: break;

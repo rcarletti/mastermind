@@ -15,6 +15,7 @@ void handle_combination(char *);
 void read_cmd(void);
 void handle_incoming_connect(struct queue *p);
 void handle_incoming_accept(struct queue *p);
+void cprintf(const char*, ...);
 
 void flush_in(void);
 
@@ -36,6 +37,8 @@ struct info player_info, opponent_info;
 int turn;
 char comb[5];
 
+int command_mode = 1;
+
 
 int main(int argc, char **argv)
 {
@@ -45,6 +48,7 @@ int main(int argc, char **argv)
     fd_set read_tmp, write_tmp;
     int msg_len;
     char * msg;
+
     
     char attempt[5];
 
@@ -220,16 +224,41 @@ int main(int argc, char **argv)
     FD_SET(cd, &read_set);
 
 
+    cprintf(" ");
+
     while(1) {
     	fflush(stdout);
 
+        struct timeval to, *pto;
+        pto = 0;
+        to.tv_sec = 60;
+        to.tv_usec = 0;
+
     	read_tmp = read_set;
     	write_tmp = write_set;
-    	ret = select(max_fd+1, &read_tmp, &write_tmp, NULL, NULL);
+
+
+        if(command_mode == 0){
+            pto = &to;
+        }
+
+    	ret = select(max_fd+1, &read_tmp, &write_tmp, NULL, pto);
     	if(ret < 0) {
     		printf("Errore select\n");
+            cprintf(" ");
     		continue;
     	}
+
+        if (ret == 0){
+
+            queue_add(&queue_l, cd, CL_DISC, 0, 0);
+            queue_add(&queue_l, sd, CL_DISC, 0, 0);
+            FD_SET(cd, &write_set);
+            FD_SET(sd, &write_set);
+            command_mode = 1;
+            cprintf("ti sei disconnesso per inattività\n");
+            continue;
+        }
 
     	for(i = 0; i < max_fd+1; i++) {
 
@@ -281,7 +310,16 @@ int main(int argc, char **argv)
 
                             break;
 
-  
+                        case CL_NEC:
+                            printf("nessun giocatore con quel nome\n");
+                            queue_remove(&queue_l, &p);
+                            break;
+
+                        case CL_BUSY:
+                            printf("giocatore occupato\n");
+                            queue_remove(&queue_l, &p);
+                            break;
+
                         default:
                             break;
                         }
@@ -311,10 +349,12 @@ int main(int argc, char **argv)
                       case CL_DISC:
                             printf("Il tuo avversario si è disconnesso\n");
                             FD_CLR(cd, &write_set);
+                            command_mode = 1;
                             break;
 
 
                         case CL_INS:
+                            command_mode = 0;
                             printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
                             FD_CLR(cd, &write_set);
                             printf("E' il tuo turno\n");
@@ -333,6 +373,8 @@ int main(int argc, char **argv)
                     
                         case CL_ANS:{
 
+                            command_mode = 0;
+
                             printf("%s\n", p->buffer );
                             printf("è il turno di %s\n",opponent_info.name );
                             FD_CLR(cd, &write_set);
@@ -345,6 +387,7 @@ int main(int argc, char **argv)
                             queue_add(&queue_l, sd, CL_WIN, 0, 0);
                             FD_SET(sd, &write_set);
                             isYourTurn =0;
+                            command_mode = 1;
 
 
 
@@ -400,6 +443,8 @@ int main(int argc, char **argv)
                             p->sd = cd;
                             p->step = 1;*/
                             FD_SET(cd, &write_set);
+
+                            command_mode = 0;
 
                             printf("E' il turno di %s\n", opponent_info.name);
                             
@@ -519,6 +564,8 @@ struct queue * queue_search(struct queue * queue_l, int sd) {
 
 int send_msg(struct queue *p) {
     int ret;
+
+
     
     switch(p->step)
     {			//sto inviando i flag
@@ -544,6 +591,7 @@ int send_msg(struct queue *p) {
 
 int rec_msg(int sd,struct queue * p) {
     int ret;
+
     
     switch(p->step)
     {
@@ -669,7 +717,7 @@ void read_comb(char * comb)
 
     } while (invalid == 1);
 
-    printf("%s\n", comb );
+
 }
 
 
@@ -690,12 +738,12 @@ void read_cmd()
     ret = read(STDIN_FILENO, (void*) cmd, 256);
 
     if(ret < 0) {
-        printf("errore in lettura, riprova");
+        cprintf("errore in lettura, riprova");
     }
 
     else if((strncmp(cmd, "!help", 5)==0)) {
         show_help();
-        printf(" ");
+        cprintf(" ");
     }
 
     else if((strncmp(cmd, "!who", 4)==0)) {
@@ -703,23 +751,38 @@ void read_cmd()
         FD_SET(sd, &write_set);
     }
 
-    else if((strncmp(cmd, "!connect", 8)==0)) {
+    else if(strncmp(cmd, "!connect", 8)==0) {
+
+        if(command_mode == 0)
+            cprintf("devi prima uscire dalla partita per usare questo comando\n");
+
+        else{
+
+        struct client_t *tmp;
         //aggiungere errore sintassi ed errore se sei già in partita
         char* buff = (char*) malloc(strlen(cmd)-9);     //alloco lo spazio per un buffer di lunghezza username
         strncpy(buff, cmd+9, strlen(cmd)-10 );      //copio il nome dentro buff
         buff[strlen(cmd)-10] = '\0';
 
-        printf("%s\n", buff);
 
-        //aggiungere errore "non puoi giocare contro te stesso"
 
         //aggiungere errore se nn esiste il client
 
-        printf("connessione in corso con %s\n",buff );
-        queue_add(&queue_l, sd, CL_CONN, strlen(buff)+1, buff);
-        free(buff);
+        if(strcmp(buff, player_info.name)==0){
+            cprintf("non puoi giocare contro te stesso, riprova\n");
+        }
 
-        FD_SET(sd, &write_set);
+
+
+        else{
+
+            cprintf("connessione in corso con %s\n",buff );
+            queue_add(&queue_l, sd, CL_CONN, strlen(buff)+1, buff);
+            free(buff);
+
+            FD_SET(sd, &write_set);
+        }
+        }
     }
 
     else if((strncmp(cmd, "!quit", 5))==0) {
@@ -728,17 +791,31 @@ void read_cmd()
     }
 
     else if((strncmp(cmd, "!disconnect", 11))==0) {
-        queue_add(&queue_l, sd, CL_DISC, 0, 0);
-        queue_add(&queue_l, cd, CL_DISC, 0, 0);
-        FD_SET(sd, &write_set);
-        FD_SET(cd, &write_set);
-        printf("ti sei disconnesso\n");
+
+        if(command_mode == 1)
+            cprintf("non puoi usare questo comando se non stai giocando\n");
+        else{
+
+            queue_add(&queue_l, sd, CL_DISC, 0, 0);
+            queue_add(&queue_l, cd, CL_DISC, 0, 0);
+            FD_SET(sd, &write_set);
+            FD_SET(cd, &write_set);
+            printf("disconnessione avvenuta con successo, ti sei arreso\n");
+            command_mode = 1;
+
+    }
     }
 
     else if((strncmp(cmd, "!combinazione", 13))==0) {
 
+
+        if(command_mode == 1)
+            cprintf("non puoi usare questo comando se non stai giocando\n");
+
+        else{
+
         if(isYourTurn == 0){
-            printf("non è il tuo turno, aspetta l'altro giocatore\n");
+            cprintf("non è il tuo turno, aspetta l'altro giocatore\n");
         }
 
         else{
@@ -754,7 +831,8 @@ void read_cmd()
         queue_add(&queue_l, cd, CL_COMB, 5 , comb_buff);
         FD_SET(cd, &write_set);
         
-        }   
+        }
+        }
     }
 
 
@@ -802,6 +880,7 @@ void handle_incoming_connect(struct queue *p)
         
         turn = 0;
         p->flags = CL_ACC;
+        command_mode = 0;
     }
 
     p->length = strlen(name)+1;
@@ -832,14 +911,19 @@ void handle_incoming_accept(struct queue *p)
     strcpy(opponent_info.name, name);
 
     queue_remove(&queue_l, &p);
+
+    command_mode = 0;
 }
 
 
 void handle_combination(char * buff){
 
 
-    int i, j;
-    int app[4] = {-1, -1, -1, -1};
+    int i, j, h;
+    int app[4];
+
+    for(i=0;i<4;i++)
+        app[i]=comb[i];
 
  
 
@@ -848,25 +932,29 @@ void handle_combination(char * buff){
     
 
     for(i=0; i<4; i++){
-        if(buff[i]==comb[i]){
+        if(buff[i]==app[i]){
             correct++;
-            app[i]= comb[i];}
-    }
+            app[i] = -1;
+        }
 
-    for(i = 0; i<4; i++){
-        for(j=0; j<4; j++){
-            if(comb[j]==buff[i] && app[i]==-1){
-                wrong++;
-                app[i]=j;
+        else{
+            for(j=0; j<4; j++){
+                if(app[i]==buff[j] && app[i]!=-1){
+                    wrong++;
+                    app[i] = -1;
+                }
             }
         }
     }
+
+   
 
     if(correct==4){
         queue_add(&queue_l, cd, CL_WIN, 0, 0 );
         FD_SET(cd, &write_set);
 
         printf("mi dispiace, hai perso\n");
+        command_mode = 1;
 
 
 
@@ -885,3 +973,18 @@ void handle_combination(char * buff){
     
 }
 
+void cprintf(const char * fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+
+    if(command_mode == 0)
+        printf("> ");
+    else
+        printf("# ");
+
+    fflush(stdout); 
+
+}

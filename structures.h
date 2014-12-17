@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #define MAXPENDING 20
 #define NAME_SIZE 20
