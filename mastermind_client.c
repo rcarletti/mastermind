@@ -290,6 +290,7 @@ int main(int argc, char **argv)
                         {
                         case CL_WHO:
                             printf("%s\n", p->buffer);
+                            cprintf("");
                             queue_remove(&queue_l, &p);
                             break;
 
@@ -299,13 +300,15 @@ int main(int argc, char **argv)
 
                         case CL_REF:
                             printf("%s ha rifiutato la partita\n", p->buffer);
+                            cprintf("");
                             queue_remove(&queue_l, &p);
                             cprintf(" ");
                             break;
 
                         case CL_ACC:
                             handle_incoming_accept(p);
-                            printf("Digita la combinazione segreta: ");
+                            printf("Digita la combinazione segreta: \n");
+                            cprintf("");
                             fflush(stdout);
                             read_comb(comb);
 
@@ -313,11 +316,13 @@ int main(int argc, char **argv)
 
                         case CL_NEC:
                             printf("nessun giocatore con quel nome\n");
+                            cprintf("");
                             queue_remove(&queue_l, &p);
                             break;
 
                         case CL_BUSY:
                             printf("giocatore occupato\n");
+                            cprintf("");
                             queue_remove(&queue_l, &p);
                             break;
 
@@ -340,6 +345,7 @@ int main(int argc, char **argv)
                     ret = rec_from(i, p, &opponent_info);
                     if(ret < 0) {
                         printf("Client disconnesso, termino la partita\n");
+                        cprintf("");
                         FD_CLR(i, &write_set);
                     }
 
@@ -348,9 +354,11 @@ int main(int argc, char **argv)
                         switch(p->flags)
                         {
                       case CL_DISC:
-                            printf("Il tuo avversario si è disconnesso\n");
-                            FD_CLR(cd, &write_set);
                             command_mode = 1;
+                            printf("Il tuo avversario si è disconnesso\n");
+                            cprintf("");
+                            FD_CLR(cd, &write_set);
+                            
                             break;
 
 
@@ -359,6 +367,8 @@ int main(int argc, char **argv)
                             printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
                             FD_CLR(cd, &write_set);
                             printf("E' il tuo turno\n");
+                            
+                            cprintf("");
                             isYourTurn = 1;
 
                             break;
@@ -368,6 +378,7 @@ int main(int argc, char **argv)
                             FD_CLR(cd, &write_set);
                             isYourTurn = 1;
                             printf("è il tuo turno\n");
+                            cprintf("");
                             handle_combination(p->buffer);
                             
                             break;
@@ -378,17 +389,20 @@ int main(int argc, char **argv)
 
                             printf("%s\n", p->buffer );
                             printf("è il turno di %s\n",opponent_info.name );
+                            cprintf("");
                             FD_CLR(cd, &write_set);
                             break; 
                         }
 
                         case CL_WIN:
+                            command_mode = 1;
                             printf("hai vinto!\n");
+                            cprintf("");
                             FD_CLR(cd, &write_set);
                             queue_add(&queue_l, sd, CL_WIN, 0, 0);
                             FD_SET(sd, &write_set);
                             isYourTurn =0;
-                            command_mode = 1;
+                            
 
 
 
@@ -430,7 +444,8 @@ int main(int argc, char **argv)
                             exit(0);
 
                         case CL_ACC:
-                            printf("Digita la combinazione segreta: ");
+                            printf("Digita la combinazione segreta: \n");
+                            cprintf("");
                             fflush(stdout);
                             read_comb(comb);
 
@@ -750,27 +765,34 @@ void read_cmd()
     else if((strncmp(cmd, "!who", 4)==0)) {
         queue_add(&queue_l, sd, CL_WHO, 0, 0);
         FD_SET(sd, &write_set);
+
     }
 
     else if(strncmp(cmd, "!connect", 8)==0) {
 
-        if(command_mode == 0)
+        if(command_mode == 0){
             cprintf("devi prima uscire dalla partita per usare questo comando\n");
+            
+        }
+
+        else if(strlen(cmd)<11){
+            printf("sintassi: !connect nome_client\n");
+        }
 
         else{
 
-        struct client_t *tmp;
-        //aggiungere errore sintassi ed errore se sei già in partita
-        char* buff = (char*) malloc(strlen(cmd)-9);     //alloco lo spazio per un buffer di lunghezza username
-        strncpy(buff, cmd+9, strlen(cmd)-10 );      //copio il nome dentro buff
-        buff[strlen(cmd)-10] = '\0';
+            struct client_t *tmp;
+            //aggiungere errore sintassi ed errore se sei già in partita
+            char* buff = (char*) malloc(strlen(cmd)-9);     //alloco lo spazio per un buffer di lunghezza username
+            strncpy(buff, cmd+9, strlen(cmd)-10 );      //copio il nome dentro buff
+            buff[strlen(cmd)-10] = '\0';
 
 
 
-        //aggiungere errore se nn esiste il client
+        
 
-        if(strcmp(buff, player_info.name)==0){
-            cprintf("non puoi giocare contro te stesso, riprova\n");
+            if(strcmp(buff, player_info.name)==0){
+                cprintf("non puoi giocare contro te stesso, riprova\n");
         }
 
 

@@ -401,7 +401,7 @@ int main(int argc, char **argv){
 							case CL_WIN:
 							case CL_DISC:
 							{
-								FD_CLR(i, &read_set);
+								FD_CLR(i, &write_set);
 
 								struct client_t *from, *opp;
 
