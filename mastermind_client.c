@@ -171,7 +171,7 @@ int main(int argc, char **argv)
                         p=queue_add(&queue_l, sd, CL_INFO, 0, 0);
 
                     ret = rec_msg(sd, p);
-                    if(ret < 0) {
+                    if(ret <= 0) {
                         printf("Server disconnesso\n");
                         close(sd);
                         exit(1);
@@ -278,9 +278,10 @@ int main(int argc, char **argv)
                     }
                     
                     ret = rec_msg(sd, p);
-                    if(ret < 0) {
+                    if(ret <= 0) {
                         printf("Server disconnesso\n");
                         close(sd);
+                        close(cd);
                         exit(0);
                     }
 
@@ -367,7 +368,7 @@ int main(int argc, char **argv)
                             printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
                             FD_CLR(cd, &write_set);
                             printf("E' il tuo turno\n");
-                            
+
                             cprintf("");
                             isYourTurn = 1;
 
