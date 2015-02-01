@@ -327,6 +327,13 @@ int main(int argc, char **argv)
                             queue_remove(&queue_l, &p);
                             break;
 
+                        case CL_DISC:
+                            command_mode = 1;
+                            printf("Il tuo avversario si è disconnesso\n");
+                            cprintf("");
+                            FD_CLR(cd, &write_set);
+                            break;
+
                         default:
                             break;
                         }
