@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     FD_ZERO(&write_set);
 
     memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;	//ipv4
+    server_addr.sin_family = AF_INET;   //ipv4
     server_addr.sin_port = htons(atoi(argv[2]));
     ret = inet_pton(AF_INET, argv[1], &server_addr.sin_addr);
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 
     }
 
-    ret = fcntl(sd, F_GETFL, 0);	//ritorna la lista dei flag
+    ret = fcntl(sd, F_GETFL, 0);    //ritorna la lista dei flag
     fcntl(sd, F_SETFL, ret| O_NONBLOCK);
 
     connect(sd, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -211,7 +211,7 @@ int main(int argc, char **argv)
         }
 
     }
-    		//risveglio il descrittore relativo alla tastiera
+            //risveglio il descrittore relativo alla tastiera
     
     
     FD_SET(fileno(stdin), &read_set);
@@ -227,27 +227,27 @@ int main(int argc, char **argv)
     cprintf(" ");
 
     while(1) {
-    	fflush(stdout);
+        fflush(stdout);
 
         struct timeval to, *pto;
         pto = 0;
         to.tv_sec = 60;
         to.tv_usec = 0;
 
-    	read_tmp = read_set;
-    	write_tmp = write_set;
+        read_tmp = read_set;
+        write_tmp = write_set;
 
 
         if(command_mode == 0){
             pto = &to;
         }
 
-    	ret = select(max_fd+1, &read_tmp, &write_tmp, NULL, pto);
-    	if(ret < 0) {
-    		printf("Errore select\n");
+        ret = select(max_fd+1, &read_tmp, &write_tmp, NULL, pto);
+        if(ret < 0) {
+            printf("Errore select\n");
             cprintf(" ");
-    		continue;
-    	}
+            continue;
+        }
 
         if (ret == 0){
 
@@ -260,9 +260,9 @@ int main(int argc, char **argv)
             continue;
         }
 
-    	for(i = 0; i < max_fd+1; i++) {
+        for(i = 0; i < max_fd+1; i++) {
 
-    		if(FD_ISSET(i, &read_tmp)) {
+            if(FD_ISSET(i, &read_tmp)) {
 
                 if(i == fileno(stdin)) { //nuovi dati dall'utente
                     read_cmd();
@@ -325,6 +325,13 @@ int main(int argc, char **argv)
                             printf("giocatore occupato\n");
                             cprintf("");
                             queue_remove(&queue_l, &p);
+                            break;
+
+                        case CL_DISC:
+                            command_mode = 1;
+                            printf("Il tuo avversario si è disconnesso\n");
+                            cprintf("");
+                            FD_CLR(cd, &write_set);
                             break;
 
                         default:
@@ -417,7 +424,7 @@ int main(int argc, char **argv)
                         
                     }
                 }
-    		}
+            }
 
             if(FD_ISSET(i, &write_tmp)) {
                 
@@ -501,7 +508,7 @@ int main(int argc, char **argv)
                     }
                 }
             }
-    	}
+        }
     }
 
     return 0;
@@ -520,13 +527,13 @@ int main(int argc, char **argv)
 
 
 void show_help(){
-	printf("Sono disponibili i seguenti comandi:\n"
-		"* !help --> mostra l'elenco dei comandi disponibili\n"
-		"* !who --> mostra l'elenco dei client connessi al server\n"
-		"* !connect nome_client --> avvia una partita con l'utente nome_client\n"
-		"* !disconnect --> disconnette il client dall'attuale partita intrapresa con un altro peer\n"
-		"* !quit --> disconnette il client dal server\n"
-		"* !combinazione comb -> permette al client di fare un tentativo con la combinazione comb\n ");
+    printf("Sono disponibili i seguenti comandi:\n"
+        "* !help --> mostra l'elenco dei comandi disponibili\n"
+        "* !who --> mostra l'elenco dei client connessi al server\n"
+        "* !connect nome_client --> avvia una partita con l'utente nome_client\n"
+        "* !disconnect --> disconnette il client dall'attuale partita intrapresa con un altro peer\n"
+        "* !quit --> disconnette il client dal server\n"
+        "* !combinazione comb -> permette al client di fare un tentativo con la combinazione comb\n ");
 }
 
 
@@ -585,7 +592,7 @@ int send_msg(struct queue *p) {
 
     
     switch(p->step)
-    {			//sto inviando i flag
+    {           //sto inviando i flag
     case 1:
         ret = send(p->sd, (void*)&p->flags, sizeof(p->flags), 0);
         break;
