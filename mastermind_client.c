@@ -39,7 +39,6 @@ char comb[5];
 
 int command_mode = 1;
 
-
 int main(int argc, char **argv)
 {
     struct sockaddr_in server_addr;
@@ -331,7 +330,10 @@ int main(int argc, char **argv)
                             command_mode = 1;
                             printf("Il tuo avversario si è disconnesso\n");
                             cprintf("");
+                            close(cd);
                             FD_CLR(cd, &write_set);
+                            FD_CLR(cd, &read_set);
+                            queue_remove(&queue_l, &p);
                             break;
 
                         default:
@@ -371,7 +373,16 @@ int main(int argc, char **argv)
 
 
                         case CL_INS:
-                            command_mode = 0;
+                            //command_mode = 0;
+                            printf("cl_ins\n");
+                            if (command_mode != 0)
+                            {
+                                /* L'avversario si è disconnesso prima che
+                                inserissi la combinazione */
+                                break;
+                            }
+
+
                             printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
                             FD_CLR(cd, &write_set);
                             printf("E' il tuo turno\n");
@@ -445,10 +456,9 @@ int main(int argc, char **argv)
                         switch(p->flags)
                         {
                         case CL_QUIT:
-                            close(sd);
+                            //close(sd);
                             close(cd);
                             printf("Disconnesso con successo\n");
-                            queue_remove(&queue_l, &p);
                             exit(0);
 
                         case CL_ACC:
@@ -864,6 +874,10 @@ void read_cmd()
         
         }
         }
+    }
+    else
+    {
+        cprintf("comando non valido\n");
     }
 
 
