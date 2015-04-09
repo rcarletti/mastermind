@@ -27,6 +27,8 @@ fd_set read_set, write_set;
 char  bb[100];
 
 int isYourTurn = 0;
+int insertingCombination = 0;
+int opponentHasInsertedComb = 0;
 
 int correct =0;
 int wrong = 0;
@@ -264,7 +266,12 @@ int main(int argc, char **argv)
             if(FD_ISSET(i, &read_tmp)) {
 
                 if(i == fileno(stdin)) { //nuovi dati dall'utente
-                    read_cmd();
+                    if (insertingCombination) {
+                        read_comb(comb);
+                    }
+                    else {
+                        read_cmd();
+                    }
                 }
 
                 else if(i == sd) {  //nuovi dati dal server
@@ -310,7 +317,9 @@ int main(int argc, char **argv)
                             printf("Digita la combinazione segreta: \n");
                             cprintf("");
                             fflush(stdout);
-                            read_comb(comb);
+                            insertingCombination = 1;
+                            isYourTurn = 1;
+                            //read_comb(comb);
 
                             break;
 
@@ -328,6 +337,7 @@ int main(int argc, char **argv)
 
                         case CL_DISC:
                             command_mode = 1;
+                            insertingCombination = 0;
                             printf("Il tuo avversario si è disconnesso\n");
                             cprintf("");
                             close(cd);
@@ -365,6 +375,7 @@ int main(int argc, char **argv)
                         {
                       case CL_DISC:
                             command_mode = 1;
+                            insertingCombination = 0;
                             printf("Il tuo avversario si è disconnesso\n");
                             cprintf("");
                             FD_CLR(cd, &write_set);
@@ -373,22 +384,17 @@ int main(int argc, char **argv)
 
 
                         case CL_INS:
-                            //command_mode = 0;
-                            printf("cl_ins\n");
-                            if (command_mode != 0)
+                            opponentHasInsertedComb = 1;
+
+                            if (insertingCombination == 0)
                             {
-                                /* L'avversario si è disconnesso prima che
-                                inserissi la combinazione */
-                                break;
+                                printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
+                                printf("E' il tuo turno\n");
+                                cprintf("");
+                                opponentHasInsertedComb = 0;
                             }
-
-
-                            printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
+                            
                             FD_CLR(cd, &write_set);
-                            printf("E' il tuo turno\n");
-
-                            cprintf("");
-                            isYourTurn = 1;
 
                             break;
 
@@ -465,22 +471,23 @@ int main(int argc, char **argv)
                             printf("Digita la combinazione segreta: \n");
                             cprintf("");
                             fflush(stdout);
-                            read_comb(comb);
-
+                            insertingCombination = 1;
                             isYourTurn = 0;
 
-                            queue_add(&queue_l, cd, CL_INS, 0, 0);
+                            //read_comb(comb);
+
+                            //queue_add(&queue_l, cd, CL_INS, 0, 0);
                             /*p->flags = CL_INS;
                             p->buffer = 0;
                             free(p->buffer);
                             p->length = 0;
                             p->sd = cd;
                             p->step = 1;*/
-                            FD_SET(cd, &write_set);
+                            //FD_SET(cd, &write_set);
 
                             command_mode = 0;
 
-                            printf("E' il turno di %s\n", opponent_info.name);
+                            //printf("E' il turno di %s\n", opponent_info.name);
                             
                             break;
 
@@ -735,23 +742,48 @@ void queue_remove(struct queue ** queue_l, struct queue ** pun) {
 
 void read_comb(char * comb)
 {
+    int ret = 0;
     int invalid=0;
+    int i = 0;
 
-    do {
-        int i;
+    memset(comb, 0, 5);
 
-        invalid = 0;
-
-        scanf("%4s", comb);
+    ret = read(STDIN_FILENO, (void*) comb, 5);
+    
+    if (ret > 5) {
         flush_in();
+    }
+    else if(ret < 0) {
+        cprintf("errore in lettura, riprova");
+    }
 
-        for(i=0; i<4 ; i++)
-            if(comb[i]>'9' || comb[i]<'0')
-                invalid = 1;
+    for(i=0; i<4 ; i++)
+        if(comb[i]>'9' || comb[i]<'0')
+            return;
 
-    } while (invalid == 1);
+    insertingCombination = 0;
 
+    if (isYourTurn == 0) /* Giocatore che NON HA richiesto la partita */
+    {
+        queue_add(&queue_l, cd, CL_INS, 0, 0);
+        FD_SET(cd, &write_set);
 
+        printf("E' il turno di %s\n", opponent_info.name);
+    }
+    else /* Giocatore che HA richiesto la partita (deve aspettare CL_INS)*/
+    {
+        if (opponentHasInsertedComb)
+        {
+            printf("%s ha inserito la combinazione, la partita può cominciare\n", opponent_info.name);
+            printf("E' il tuo turno\n");
+            cprintf("");
+            opponentHasInsertedComb = 0;
+        }
+        else
+        {
+            printf("Attendi che %s inserisca la sua combinazione...\n", opponent_info.name);
+        }
+    }
 }
 
 
