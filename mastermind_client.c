@@ -340,9 +340,6 @@ int main(int argc, char **argv)
                             insertingCombination = 0;
                             printf("Il tuo avversario si è disconnesso\n");
                             cprintf("");
-                            close(cd);
-                            FD_CLR(cd, &write_set);
-                            FD_CLR(cd, &read_set);
                             queue_remove(&queue_l, &p);
                             break;
 
@@ -378,7 +375,6 @@ int main(int argc, char **argv)
                             insertingCombination = 0;
                             printf("Il tuo avversario si è disconnesso\n");
                             cprintf("");
-                            FD_CLR(cd, &write_set);
                             
                             break;
 

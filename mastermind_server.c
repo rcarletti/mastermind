@@ -393,7 +393,6 @@ int main(int argc, char **argv){
 							}
 
 							case CL_QUIT:
-								printf("client disconnesso\n");
 								client_remove(i, &client_list, queue_l, &write_set);
 								close(i);
 								FD_CLR(i, &write_set);
@@ -576,8 +575,6 @@ void client_remove(int i, struct client_t ** client_list,struct queue * queue_l,
 	}
 
 	if(player == *client_list){
-		//printf("top\n");
-		printf("%s si è disconnesso\n", player->name);
 		*client_list = player->next;
 		free(player);
 	}
