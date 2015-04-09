@@ -408,7 +408,7 @@ int main(int argc, char **argv){
 
 								struct client_t *from, *opp;
 
-								printf("pre-segv\n");
+								//printf("pre-segv\n");
 
 								for(from = client_list; from ->id!=i; from = from->next);		//client
 								for(opp = client_list; opp->id !=from->opponent_id; opp = opp->next);		//avversario
@@ -554,49 +554,40 @@ void client_append(struct client_t ** client_p,struct client_t ** client_list_p)
 
 
 void client_remove(int i, struct client_t ** client_list,struct queue * queue_l, fd_set *write_set){
-	struct client_t * tmp;
+	struct client_t * player, * opponent;
 
 	//rivedi funzione
 	
+	for(player = *client_list; player->id != i; player = player->next);
+	printf("%s si è disconnesso\n", player->name);
 
-	for (tmp = *client_list; tmp!=0; tmp = tmp->next){	
-			//controllo se il client stava giocando con qualcuno
-		if(tmp->opponent_id == i){
-			tmp->busy = 0;
-			tmp->opponent_id = -1;
+	for (opponent = *client_list; opponent !=0 ; opponent = opponent->next) {	
+		//controllo se il player stava giocando con qualcuno
+		if(opponent->opponent_id == i) {
+			opponent->busy = 0;
+			opponent->opponent_id = -1;
 			// fai questo qua:
-			//printf("%s e %s hanno terminato la partita\n", from->name, opp->name);
-			queue_add(&queue_l, tmp->id, CL_DISC, 0, 0);
-			FD_SET(tmp->id, write_set);
+			printf("%s e %s hanno terminato la partita\n", player->name, opponent->name);
+			queue_add(&queue_l, opponent->id, CL_DISC, 0, 0);
+			FD_SET(opponent->id, write_set);
 
 		}
 
 	}
 
-	if((*client_list)->id ==i){
-		printf("top\n");
-		printf("%s si è disconnesso\n", (*client_list)->name);
-		tmp = *client_list;
-		*client_list = (*client_list)->next;
-		free(tmp);
-
+	if(player == *client_list){
+		//printf("top\n");
+		printf("%s si è disconnesso\n", player->name);
+		*client_list = player->next;
+		free(player);
 	}
-
 	else {
+		struct client_t *tmp;
 
-		struct client_t *tmp2;
+		for(tmp = *client_list; tmp->next != 0 && tmp->next != player; tmp = tmp->next);
+		tmp->next = player->next;
 
-		for(tmp = *client_list; tmp->next!=0 && tmp->next->id !=i; tmp = tmp->next);
-		tmp2 = tmp->next;
-
-		printf("%s si è disconnesso\n",tmp2->name );
-		tmp->next = tmp2->next;
-		free(tmp2);
-
-
-
-
-
+		free(player);
 	}
 }
 
@@ -621,7 +612,7 @@ void queue_remove(struct queue ** queue_l, struct queue ** pun) {
     }
 
 
-    printf("%d\n",k );
+    //printf("%d\n",k );
     
 
 }
