@@ -575,11 +575,6 @@ void client_remove(int i, struct client_t ** client_list,struct queue * queue_l,
 	}
 
 	if(player == *client_list){
-<<<<<<< HEAD
-=======
-		//printf("top\n");
-		printf("%s si è disconnesso\n", player->name);
->>>>>>> a13da2f7cf481e1758b67d4dac40604892b883c5
 		*client_list = player->next;
 		free(player);
 	}
