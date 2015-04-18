@@ -50,8 +50,7 @@ int main(int argc, char **argv)
     int msg_len;
     char * msg;
 
-    
-    char attempt[5];
+
 
     queue_l = 0;
     invalid = 0;
@@ -118,7 +117,7 @@ int main(int argc, char **argv)
         printf("Inserisci il tuo nome: ");
         fflush(stdout);
 
-        scanf("%s",&player_info.name);
+        scanf("%s",player_info.name);
         flush_in();
 
         printf("Inserisci la porta di ascolto UDP (>1024): ");
@@ -225,7 +224,7 @@ int main(int argc, char **argv)
     FD_SET(cd, &read_set);
 
 
-    cprintf(" ");
+    cprintf("");
 
     while(1) {
         fflush(stdout);
@@ -246,7 +245,7 @@ int main(int argc, char **argv)
         ret = select(max_fd+1, &read_tmp, &write_tmp, NULL, pto);
         if(ret < 0) {
             printf("Errore select\n");
-            cprintf(" ");
+            cprintf("");
             continue;
         }
 
@@ -309,7 +308,7 @@ int main(int argc, char **argv)
                             printf("%s ha rifiutato la partita\n", p->buffer);
                             cprintf("");
                             queue_remove(&queue_l, &p);
-                            cprintf(" ");
+                            cprintf("");
                             break;
 
                         case CL_ACC:
@@ -461,6 +460,7 @@ int main(int argc, char **argv)
                             //close(sd);
                             close(cd);
                             printf("Disconnesso con successo\n");
+                            cprintf("");
                             exit(0);
 
                         case CL_ACC:
@@ -739,7 +739,7 @@ void queue_remove(struct queue ** queue_l, struct queue ** pun) {
 void read_comb(char * comb)
 {
     int ret = 0;
-    int invalid=0;
+
     int i = 0;
 
     memset(comb, 0, 5);
@@ -827,7 +827,6 @@ void read_cmd()
 
         else{
 
-            struct client_t *tmp;
             //aggiungere errore sintassi ed errore se sei già in partita
             char* buff = (char*) malloc(strlen(cmd)-9);     //alloco lo spazio per un buffer di lunghezza username
             strncpy(buff, cmd+9, strlen(cmd)-10 );      //copio il nome dentro buff
@@ -871,6 +870,7 @@ void read_cmd()
             FD_SET(cd, &write_set);
             printf("disconnessione avvenuta con successo, ti sei arreso\n");
             command_mode = 1;
+            cprintf("");
 
     }
     }
@@ -924,7 +924,7 @@ void handle_incoming_connect(struct queue *p)
     name = (char *)(p->buffer+ sizeof(struct in_addr) + sizeof(unsigned short));
 
     do{
-        char ch;
+
 
         printf("Il client %s, IP %s, porta %hu, vuole giocare. "
                "Accetti la richiesta? [Y|N]: ", name, inet_ntoa(*ip), *port);
@@ -992,7 +992,7 @@ void handle_incoming_accept(struct queue *p)
 void handle_combination(char * buff){
 
 
-    int i, j, h;
+    int i, j;
     int app[4];
 
     for(i=0;i<4;i++)
@@ -1028,6 +1028,7 @@ void handle_combination(char * buff){
 
         printf("mi dispiace, hai perso\n");
         command_mode = 1;
+        cprintf("");
 
 
 

@@ -16,7 +16,6 @@ void client_remove(int, struct client_t**, struct queue*, fd_set*);
 int main(int argc, char **argv){
 
 	int ret, max_fd, listener, new_fd;
-	int existing;
 	int count = 0;
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
@@ -300,8 +299,7 @@ int main(int argc, char **argv){
 
 								else{
 									struct client_t *from, *to;
-									struct in_addr *ip;
-									unsigned short *port;
+
 
 									printf("invio richiesta a %s\n",p->buffer );
 									for(to = client_list; to!=0 && (strcmp(to->name, p->buffer)!=0); to = to->next);
@@ -358,9 +356,7 @@ int main(int argc, char **argv){
 
 							case CL_ACC:
 							{
-								struct in_addr *ip;
-								unsigned short *port;
-								char * name;
+
 								struct client_t * to, *from;
 
 								for(to = client_list; to!=0 && (strcmp(to->name, p->buffer)!=0); to = to->next);
